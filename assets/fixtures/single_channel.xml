@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fixtureDefinition>
+    <name>Single Channel (dimmer)</name>
+    <id>single_channel</id>
+    <colorChannelPosition value="0" />
+    <intensityChannelPostion value="0" />
+    <channelAmount value="1" />
+    <editColor r="0.984" g="0.824" b="0.012"/>
+</fixtureDefinition>

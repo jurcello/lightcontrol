@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fixtureDefinition>
+    <name>Martin mac 500</name>
+    <id>martin_mac_500</id>
+    <colorChannelPosition value="0" />
+    <intensityChannelPostion value="2" />
+    <channelAmount value="16" />
+    <editColor r="1" g="0.5" b="0.1"/>
+    <components>
+        <component type="pan" channel="11" name="Pan" id="pan" />
+        <component type="tilt" channel="13" name="Tilt" id="tilt" />
+        <component type="command" channel="1" name="Shutter, strobe, reset" id="shutter_strobe_reset">
+            <commands>
+                <command name="Shutter closed" value="0"/>
+                <command name="Shutter open" value="20"/>
+                <command name="Strobe, fast -> slow" min="50" max="72"/>
+                <command name="Random strobe fast" value="128"/>
+            </commands>
+        </component>
+        <component type="command" channel="3" name="Color 1" id="color_1">
+            <commands>
+                <command name="White -> Blue 111" min="0" max="16"/>
+                <command name="Cyan 401" value="145"/>
+                <command name="Pink 312" value="149"/>
+                <command name="Blue 101" value="153"/>
+                <command name="White" value="181"/>
+            </commands>
+        </component>
+        <component type="command" channel="9" name="Iris" id="iris">
+            <commands>
+                <command name="Open -> Close" min="0" max="199"/>
+                <command name="Close" value="200"/>
+                <command name="Pulse openening, fast -> slow" min="216" max="229"/>
+                <command name="Pulse closing, fast -> slow" min="230" max="243"/>
+                <command name="Random pulse opening, fast" value="244"/>
+                <command name="Random pulse opening, slow" value="247"/>
+                <command name="Random pulse closing, fast" value="250"/>
+                <command name="Random pulse closing, slow" value="253"/>
+            </commands>
+        </component>
+        <component type="command" channel="15" name="Pan/Tilt Speed" id="pan_tilt_speed">
+            <commands>
+                <command name="Tracking" value="0"/>
+                <command name="Fast -> Slow" min="3" max="245"/>
+                <command name="Tracking, normal speed (override PTSP FAST)" value="246"/>
+                <command name="Tracking, fast speed (override PTSP NORM)" value="249"/>
+                <command name="Blackout while moving" value="252"/>
+            </commands>
+        </component>
+
+        <component type="channel" channel="8" name="Focus" id="focus"/>
+    </components>
+</fixtureDefinition>

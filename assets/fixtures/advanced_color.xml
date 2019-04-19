@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fixtureDefinition>
+    <name>Advanced Color (6 channels)</name>
+    <id>advanced_color</id>
+    <colorChannelPosition value="1" />
+    <intensityChannelPostion value="4" />
+    <channelAmount value="6" />
+    <editColor r="1" g="0" b="1"/>
+</fixtureDefinition>

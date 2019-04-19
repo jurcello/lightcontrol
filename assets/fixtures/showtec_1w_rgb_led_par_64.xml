@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fixtureDefinition>
+    <name>Showtec 1W RGB LED PAR 64</name>
+    <id>showtec_1w_rgb_led_par_64</id>
+    <colorChannelPosition value="1" />
+    <intensityChannelPostion value="7" />
+    <channelAmount value="7" />
+    <editColor r="0.5" g="1.0" b="1"/>
+</fixtureDefinition>

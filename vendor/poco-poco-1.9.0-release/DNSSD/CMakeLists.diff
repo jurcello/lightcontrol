@@ -1,0 +1,80 @@
+diff --git a/cmake/FindAvahi.cmake b/cmake/FindAvahi.cmake
+new file mode 100644
+index 0000000..09bfa3e
+--- /dev/null
++++ b/cmake/FindAvahi.cmake
+@@ -0,0 +1,20 @@
++#
++# - Find Avahi
++# Find the native AVAHI includes and library
++#
++#  AVAHI_INCLUDE_DIRS - where to find pcre.h, etc.
++#  AVAHI_LIBRARIES    - List of libraries when using pcre.
++#  AVAHI_FOUND        - True if pcre found.
++
++find_library(AVAHI_LIBRARY-COMMON NAMES avahi-common)
++find_library(AVAHI_LIBRARY-CLIENT NAMES avahi-client)
++
++find_path(AVAHI_INCLUDE_DIR avahi-client/publish.h)
++include(FindPackageHandleStandardArgs)
++
++find_package_handle_standard_args(Avahi DEFAULT_MSG AVAHI_LIBRARY-COMMON AVAHI_LIBRARY-CLIENT AVAHI_INCLUDE_DIR)
++
++if(AVAHI_FOUND)
++	set(AVAHI_LIBRARIES ${AVAHI_LIBRARY-COMMON} ${AVAHI_LIBRARY-CLIENT})
++	set(AVAHI_INCLUDE_DIRS ${AVAHI_INCLUDE_DIR})
++endif()
+diff --git a/cmake/FindBonjour.cmake b/cmake/FindBonjour.cmake
+new file mode 100644
+index 0000000..b465f28
+--- /dev/null
++++ b/cmake/FindBonjour.cmake
+@@ -0,0 +1,48 @@
++# - Try to find Bonjour 
++# (See http://developer.apple.com/networking/bonjour/index.html)
++# By default available on MacOS X.
++# Check for libdns_sd
++#
++#  BONJOUR_INCLUDE_DIR - where to find dns_sd.h, etc.
++#  BONJOUR_LIBRARIES   - List of libraries when using ....
++#  BONJOUR_FOUND       - True if Bonjour libraries found.
++
++set(BONJOUR_FOUND FALSE)
++set(BONJOUR_LIBRARIES)
++
++message(STATUS "Checking whether Bonjour is supported")
++
++# Bonjour is built-in on MacOS X / iOS (i.e. available in libSystem)
++if(NOT APPLE)
++	IF (WIN32)
++		FIND_PATH(BONJOUR_INCLUDE_DIR dns_sd.h
++			PATHS $ENV{PROGRAMW6432}/Bonjour\ SDK/Include
++			)
++		FIND_LIBRARY(BONJOUR_LIBRARY
++			NAMES dnssd
++			PATHS $ENV{PROGRAMW6432}/Bonjour\ SDK/Lib/x64
++			)
++	ELSE(WIN32)
++		find_path(BONJOUR_INCLUDE_DIR dns_sd.h 
++			PATHS /opt/dnssd/include /usr/include  /usr/local/include
++			)
++		find_library(BONJOUR_LIBRARY 
++			NAMES dns_sd
++			PATHS /opt/dnssd/lib /usr/lib /usr/local/lib
++			)
++	ENDIF(WIN32)
++	if(NOT BONJOUR_INCLUDE_DIR OR NOT BONJOUR_LIBRARY)
++		return()
++	else()
++		set(BONJOUR_LIBRARIES ${BONJOUR_LIBRARY} )
++		set(BONJOUR_FOUND TRUE)
++	endif()
++else()
++	set(BONJOUR_FOUND TRUE)
++endif()
++
++
++mark_as_advanced( FORCE
++	BONJOUR_INCLUDE_DIR
++	BONJOUR_LIBRARY
++	)

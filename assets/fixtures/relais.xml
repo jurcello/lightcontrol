@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fixtureDefinition>
+    <name>Relais</name>
+    <id>relais</id>
+    <colorChannelPosition value="0" />
+    <intensityChannelPostion value="0" />
+    <channelAmount value="1" />
+    <editColor r="1" g="1" b="1"/>
+</fixtureDefinition>

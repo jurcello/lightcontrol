@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fixtureDefinition>
+    <name>Led Ball</name>
+    <id>led_ball</id>
+    <colorChannelPosition value="1" />
+    <intensityChannelPostion value="4" />
+    <channelAmount value="4" />
+    <editColor r="1" g="0.5" b="0"/>
+    <colorType>RBG</colorType>
+</fixtureDefinition>

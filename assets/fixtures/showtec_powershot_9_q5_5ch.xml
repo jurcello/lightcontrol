@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fixtureDefinition>
+    <name>Showtec Powerspot 9 Q5 (5 channel)</name>
+    <id>showtec_powershot_9_q5_5ch</id>
+    <colorChannelPosition value="1" />
+    <intensityChannelPostion value="0" />
+    <channelAmount value="5" />
+    <editColor r="0.5" g="0" b="0.7"/>
+</fixtureDefinition>

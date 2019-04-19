@@ -1,0 +1,72 @@
+# version 330 core
+
+struct Light
+{
+    vec4 lightcolor;
+    vec4 position;
+    float intensity;
+};
+
+uniform sampler2D texture1;
+uniform int lightCount;
+uniform mat4 ciViewMatrix;
+
+in vec2 TextCoord0;
+in vec3 Normal;
+in vec3 FragPos;
+
+layout (std140) uniform Lights
+{
+    Light uLights[2];
+};
+
+out vec4 oColor;
+
+float ambient();
+float diffuse(vec3 lightDirection, vec3 normal);
+float specular(vec3 viewDirection, vec3 lightDirection, vec3 normal);
+float calculateLight(vec3 lightPosition, vec3 fragPosition, vec3 normal);
+
+void main(void ) {
+    vec3 color = vec3(texture(texture1, TextCoord0));
+    vec3 normal = normalize(Normal);
+
+    vec4 intensity = vec4(0.0);
+    for (int i = 0; i < lightCount; i++) {
+        vec3 LightPos = vec3(ciViewMatrix * uLights[i].position);
+        intensity += uLights[i].lightcolor * calculateLight(LightPos, FragPos, normal) * uLights[i].intensity;
+    }
+    
+    oColor = vec4(color, 1.0) * intensity;
+}
+
+float ambient()
+{
+    return 0.2;
+}
+
+float diffuse(vec3 lightDirection, vec3 normal)
+{
+    return max(dot(lightDirection, normal), 0.0);
+}
+
+float specular(vec3 viewDirection, vec3 lightDirection, vec3 normal)
+{
+    float strength = 0.5;
+    vec3 reflectDirection = reflect(-lightDirection, normal);
+    return pow(max(dot(viewDirection, reflectDirection), 0.0), 128) * strength;
+}
+
+float calculateLight(vec3 lightPosition, vec3 fragPosition, vec3 normal)
+{
+    vec3 lightDirection = normalize(lightPosition - fragPosition);
+    vec3 viewDirection = normalize(-fragPosition);
+    
+    float value = 0;
+    value += ambient() + diffuse(lightDirection, normal) + specular(viewDirection, lightDirection, normal);
+    
+    // Calculate drop off.
+    float distance = abs(distance(lightPosition, fragPosition));
+    value /= pow(distance, 1.2);
+    return value;
+}

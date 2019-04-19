@@ -1,0 +1,22 @@
+#version 330 core
+
+uniform mat4 ciModelViewProjection;
+uniform mat4 ciModelMatrix;
+uniform mat4 ciViewMatrix;
+
+in vec4 ciPosition;
+in vec3 ciColor;
+in vec2 ciTexCoord0;
+
+in vec3 ciNormal;
+
+out vec3 Normal;
+out vec3 FragPos;
+
+void main(void) {
+    gl_Position = ciModelViewProjection * ciPosition;
+    FragPos = vec3(ciViewMatrix * ciModelMatrix * ciPosition);
+    Normal = mat3(transpose(inverse(ciViewMatrix * ciModelMatrix))) * ciNormal;
+    
+}
+

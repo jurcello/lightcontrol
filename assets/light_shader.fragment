@@ -1,0 +1,17 @@
+# version 330 core
+
+out vec4 oColor;
+
+in vec3 Normal;
+in vec3 FragPos;
+
+uniform vec4 LightColor;
+uniform float LightIntensity;
+
+void main(void ) {
+    vec3 direction = normalize(FragPos);
+    vec3 mNormal = normalize(Normal);
+    float intensity = max(abs(dot(direction, mNormal)), 0.0);
+    intensity = pow(intensity, 8) * LightIntensity;
+    oColor = vec4(LightColor.r * intensity, LightColor.g * intensity, LightColor.b * intensity, 1);
+}

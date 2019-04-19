@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fixtureDefinition>
+    <name>Simple Color (3 channels)</name>
+    <id>simple_color</id>
+    <colorChannelPosition value="1" />
+    <intensityChannelPostion value="0" />
+    <channelAmount value="3" />
+    <editColor r="1" g="0.5" b="0"/>
+</fixtureDefinition>
