@@ -7,7 +7,9 @@
 #include "cinder/Json.h"
 #include "Osc.h"
 #include <boost/algorithm/string.hpp>
+#include "Poco/Delegate.h"
 #include "Poco/DNSSD/DNSSDResponder.h"
+#include "Poco/DNSSD/DNSSDBrowser.h"
 #include "Poco/DNSSD/Bonjour/Bonjour.h"
 #include "Output.h"
 
@@ -24,6 +26,8 @@ const char *LIGHT_SELECT = "LIGHT_SELECT";
 const char *CHANNEL_SELECT = "CHANN_SELECT";
 const char *EFFECT_SELECT_DRAG_DROP = "EFF_SELECT";
 
+
+
 class LightControlApp : public App
 {
   public:
@@ -37,7 +41,8 @@ class LightControlApp : public App
     void update() override;
     void draw() override;
     void keyDown(KeyEvent event) override;
-
+    void onServiceFound(const void* sender, const Poco::DNSSD::DNSSDBrowser::ServiceEventArgs& args);
+    void onServiceResolved(const void* sender, const Poco::DNSSD::DNSSDBrowser::ServiceEventArgs& args);
     void setupOsc(int receivePort, int sendPort);
 
   protected:
@@ -61,6 +66,7 @@ class LightControlApp : public App
     // Zeroconf
     Poco::DNSSD::DNSSDResponder *mDnssdResponder;
     Poco::DNSSD::ServiceHandle mServiceHandle;
+    Poco::DNSSD::BrowseHandle mBrowserHandle;
 };
 
 LightControlApp::LightControlApp()
@@ -69,7 +75,7 @@ LightControlApp::LightControlApp()
       mOscSocket(nullptr),
       mOscReceivePort(10000),
       mOscSendPort(10001),
-      mOscUnicast(false),
+      mOscUnicast(true),
       mOscSendAddress("192.168.1.11"),
       mVolume(0.f)
 {
@@ -86,6 +92,9 @@ void LightControlApp::setup()
 {
     mDnssdResponder = new Poco::DNSSD::DNSSDResponder();
     mDnssdResponder->start();
+    mDnssdResponder->browser().serviceFound += Poco::delegate(this, &LightControlApp::onServiceFound);
+    mDnssdResponder->browser().serviceResolved += Poco::delegate(this, &LightControlApp::onServiceResolved);
+    mBrowserHandle = mDnssdResponder->browser().browse("_osc._udp", "");
 
     ImGui::Options options;
     setTheme(options);
@@ -175,6 +184,7 @@ void LightControlApp::oscReceive(const osc::Message &message)
 {
     try
     {
+        mOscSendAddress = message.getSenderIpAddress().to_string();
         if (message.getAddress() == "/volume") {
             mVolume = message.getArgFloat(0);
         }
@@ -204,6 +214,19 @@ void LightControlApp::oscReceive(const osc::Message &message)
     {
         app::console() << "Channel receives string or other unknown type: " << exc.what() << std::endl;
     }
+}
+
+void LightControlApp::onServiceFound(const void* sender, const Poco::DNSSD::DNSSDBrowser::ServiceEventArgs& args)
+{
+    if (args.service.name().find("(TouchOSC") != std::string::npos) {
+        reinterpret_cast<Poco::DNSSD::DNSSDBrowser*>(const_cast<void*>(sender))->resolve(args.service);
+    }
+}
+
+void LightControlApp::onServiceResolved(const void* sender, const Poco::DNSSD::DNSSDBrowser::ServiceEventArgs& args)
+{
+    this->mOscSendAddress = (std::string) args.service.host();
+    this->mOscSendPort = args.service.port();
 }
 
 void LightControlApp::keyDown(KeyEvent event)
