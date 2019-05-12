@@ -22,18 +22,13 @@ using protocol = asio::ip::udp;
 const int WINDOW_WIDTH = 1024;
 const int WINDOW_HEIGHT = 768;
 
-const char *LIGHT_SELECT = "LIGHT_SELECT";
-const char *CHANNEL_SELECT = "CHANN_SELECT";
-const char *EFFECT_SELECT_DRAG_DROP = "EFF_SELECT";
-
-
 
 class LightControlApp : public App
 {
   public:
     LightControlApp();
 
-    virtual ~LightControlApp();
+     ~LightControlApp() override;
 
     void setTheme(ImGui::Options &options);
 
@@ -60,8 +55,10 @@ class LightControlApp : public App
     void drawDmxInspector();
     // Dmx output.
     DmxOutput mDmxOut;
+    bool mDmxFound;
     int mChannelOutArray[512];
     float mVolume;
+    void autoDiscoverDmx();
 
     // Zeroconf
     Poco::DNSSD::DNSSDResponder *mDnssdResponder;
@@ -77,7 +74,10 @@ LightControlApp::LightControlApp()
       mOscSendPort(10001),
       mOscUnicast(true),
       mOscSendAddress("192.168.1.11"),
-      mVolume(0.f)
+      mVolume(0.f),
+      mDmxFound(false),
+      mChannelOutArray{0},
+      mDnssdResponder(nullptr)
 {
     Poco::DNSSD::initializeDNSSD();
 }
@@ -340,8 +340,23 @@ void LightControlApp::drawDmxInspector()
     }
 }
 
+void LightControlApp::autoDiscoverDmx() {
+    if (mDmxFound || mDmxOut.isConnected()) {
+        return;
+    }
+    if (mDmxOut.getDevicesList().size() == 1 && ! mDmxOut.isConnected()) {
+        auto devices = mDmxOut.getDevicesList();
+        mDmxOut.connect(devices[0]);
+        mDmxFound = true;
+    }
+}
+
 LightControlApp::~LightControlApp()
 {
+    mDmxOut.disConnect();
+    mDnssdResponder->unregisterService(mServiceHandle);
+    mDnssdResponder->stop();
+    delete mDnssdResponder;
     Poco::DNSSD::uninitializeDNSSD();
 }
 

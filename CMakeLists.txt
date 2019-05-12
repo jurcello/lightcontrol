@@ -2,7 +2,7 @@ cmake_minimum_required( VERSION 3.0 FATAL_ERROR )
 set( CMAKE_VERBOSE_MAKEFILE ON )
 set(CMAKE_CXX_STANDARD 14)
 set(CINDER_COPY_ASSETS ON)
-project( LightConttol )
+project( LightControl )
 
 get_filename_component( CINDER_PATH "../../cinder_0.9.1_mac" ABSOLUTE )
 get_filename_component( APP_PATH "." ABSOLUTE )
