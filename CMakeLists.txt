@@ -1,6 +1,10 @@
 cmake_minimum_required( VERSION 3.0 FATAL_ERROR )
+
 set( CMAKE_VERBOSE_MAKEFILE ON )
 set(CMAKE_CXX_STANDARD 14)
+set(MACOSX_DEPLOYMENT_TARGET 10.8)
+# for all binaries created in a CMake project:
+
 set(CINDER_COPY_ASSETS ON)
 project( LightControl )
 
@@ -28,3 +32,11 @@ ci_make_app(
 	LIBRARIES 	PocoFoundation PocoNet PocoDNSSD PocoDNSSDBonjour
 )
 
+SET(OLDER_OSX_CFLAGS "-g -O2 -stdlib=libc++ -mmacosx-version-min=10.8 -isysroot /Developer/SDKs/MacOSX10.8.sdk")
+SET(OLDER_OSX_CXXFLAGS "-g -O2 -stdlib=libc++ -mmacosx-version-min=10.8 -isysroot /Developer/SDKs/MacOSX10.8.sdk")
+SET(OLDER_OSX_LDFLAGS "-mmacosx-version-min=10.8 -stdlib=libc++ -isysroot /Developer/SDKs/MacOSX10.8.sdk")
+
+SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OLDER_OSX_CXXFLAGS}")
+SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${OLDER_OSX_CFLAGS}")
+SET(CMAKE_LD_FLAGS "${CMAKE_LD_FLAGS} ${OLDER_OSX_LDFLAGS}")
+SET(CMAKE_INSTALL_RPATH "@loader_path/lib")

@@ -28,7 +28,7 @@ class LightControlApp : public App
   public:
     LightControlApp();
 
-     ~LightControlApp() override;
+    virtual ~LightControlApp();
 
     void setTheme(ImGui::Options &options);
 
@@ -357,6 +357,7 @@ LightControlApp::~LightControlApp()
     mDnssdResponder->unregisterService(mServiceHandle);
     mDnssdResponder->stop();
     delete mDnssdResponder;
+    mBrowserHandle.reset();
     Poco::DNSSD::uninitializeDNSSD();
 }
 
