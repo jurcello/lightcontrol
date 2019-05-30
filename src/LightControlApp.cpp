@@ -23,6 +23,13 @@ const int WINDOW_WIDTH = 1024;
 const int WINDOW_HEIGHT = 768;
 
 
+bool validateIpAddress(const string &ipAddress)
+{
+    struct sockaddr_in sa;
+    int result = inet_pton(AF_INET, ipAddress.c_str(), &(sa.sin_addr));
+    return result != 0;
+}
+
 class LightControlApp : public App
 {
   public:
@@ -38,6 +45,11 @@ class LightControlApp : public App
     void keyDown(KeyEvent event) override;
     void onServiceFound(const void* sender, const Poco::DNSSD::DNSSDBrowser::ServiceEventArgs& args);
     void onServiceResolved(const void* sender, const Poco::DNSSD::DNSSDBrowser::ServiceEventArgs& args);
+    void onError(const void* sender, const Poco::DNSSD::DNSSDResponder::ErrorEventArgs& args);
+    void sendVolume();
+    void sendCurrentValues();
+    int getDmxChannel(int page, int column, int row);
+
     void setupOsc(int receivePort, int sendPort);
 
   protected:
@@ -92,7 +104,9 @@ void LightControlApp::setup()
 {
     mDnssdResponder = new Poco::DNSSD::DNSSDResponder();
     mDnssdResponder->start();
+    mDnssdResponder->serviceRegistrationFailed += Poco::delegate(this, &LightControlApp::onError);
     mDnssdResponder->browser().serviceFound += Poco::delegate(this, &LightControlApp::onServiceFound);
+    mDnssdResponder->browser().serviceResolved += Poco::delegate(this, &LightControlApp::onServiceResolved);
     mDnssdResponder->browser().serviceResolved += Poco::delegate(this, &LightControlApp::onServiceResolved);
     mBrowserHandle = mDnssdResponder->browser().browse("_osc._udp", "");
 
@@ -111,7 +125,8 @@ void LightControlApp::setupOsc(int receivePort, int sendPort)
     // register with DNSSDResponder
     mDnssdResponder->unregisterService(mServiceHandle);
     std::string name = "Light Control  - " + std::to_string(receivePort);
-    Poco::DNSSD::Service service(0, name, "", "_osc._udp", "", "", receivePort);
+    int dnssdReceivePort = receivePort;
+    Poco::DNSSD::Service service(0, name, "", "_osc._udp", "", "", dnssdReceivePort);
     mServiceHandle = mDnssdResponder->registerService(service);
 
     if (mOscReceiver)
@@ -169,50 +184,61 @@ void LightControlApp::setupOsc(int receivePort, int sendPort)
     const int localPort = 31000;
     mOscSocket = osc::UdpSocketRef(new protocol::socket(App::get()->io_service(), protocol::endpoint(protocol::v4(), localPort)));
     asio::ip::address_v4 address = asio::ip::address_v4::broadcast();
-    if (mOscUnicast)
-    {
-        address = asio::ip::address_v4::from_string(mOscSendAddress);
+    try {
+        if (mOscUnicast)
+        {
+            address = asio::ip::address_v4::from_string(mOscSendAddress);
+        }
+        else
+        {
+            mOscSocket->set_option(asio::socket_base::broadcast(true));
+        }
+        mOscSender = new osc::SenderUdp(mOscSocket, protocol::endpoint(address, sendPort));
+        sendCurrentValues();
     }
-    else
+    catch (...)
     {
-        mOscSocket->set_option(asio::socket_base::broadcast(true));
+        CI_LOG_E("Error setting up osc ");
     }
-    mOscSender = new osc::SenderUdp(mOscSocket, protocol::endpoint(address, sendPort));
 }
 
 void LightControlApp::oscReceive(const osc::Message &message)
 {
-    try
-    {
-        mOscSendAddress = message.getSenderIpAddress().to_string();
-        if (message.getAddress() == "/volume") {
-            mVolume = message.getArgFloat(0);
-        }
-        else {
-            std::vector<char *> values;
-            char *str = const_cast<char *>(message.getAddress().c_str());
-            char *pch;
-            pch = std::strtok(str, "/");
-            while (pch != NULL)
-            {
-                values.push_back(pch);
-                pch = std::strtok(NULL, "/");
+    if (mOscReceiver) {
+        try {
+            if (validateIpAddress(message.getSenderIpAddress().to_string())) {
+                mOscSendAddress = message.getSenderIpAddress().to_string();
             }
+            if (message.getAddress() == "/volume") {
+                mVolume = message.getArgFloat(0);
+            }
+            if (message.getAddress() == "/volume") {
+                mVolume = message.getArgFloat(0);
+                sendVolume();
+            } else {
+                std::vector<char *> values;
+                char *str = const_cast<char *>(message.getAddress().c_str());
+                char *pch;
+                pch = std::strtok(str, "/");
+                while (pch != NULL) {
+                    values.push_back(pch);
+                    pch = std::strtok(NULL, "/");
+                }
 
-            // Start of parsing the addres to a dmx channel.
-            std::string secondArg = "faders";
-            if (values.size() == 4 && strcmp(values.at(1), secondArg.c_str()) == 0) {
-                int first = std::atoi(values.at(0));
-                int second = std::atoi(values.at(2));
-                int third = std::atoi(values.at(3));
-                int channel = (first - 1) * 42 + (third -1) * 6 + second;
-                mChannelOutArray[channel -1] = (int) message.getArgFloat(0);
+                // Start of parsing the addres to a dmx channel.
+                std::string secondArg = "faders";
+                if (values.size() == 4 && strcmp(values.at(1), secondArg.c_str()) == 0) {
+                    int first = std::atoi(values.at(0));
+                    int second = std::atoi(values.at(2));
+                    int third = std::atoi(values.at(3));
+                    int channel = (first - 1) * 42 + (third - 1) * 6 + second;
+                    mChannelOutArray[channel - 1] = (int) message.getArgFloat(0);
+                }
             }
         }
-    }
-    catch (std::exception &exc)
-    {
-        app::console() << "Channel receives string or other unknown type: " << exc.what() << std::endl;
+        catch (std::exception &exc) {
+            app::console() << "Channel receives string or other unknown type: " << exc.what() << std::endl;
+        }
     }
 }
 
@@ -225,8 +251,16 @@ void LightControlApp::onServiceFound(const void* sender, const Poco::DNSSD::DNSS
 
 void LightControlApp::onServiceResolved(const void* sender, const Poco::DNSSD::DNSSDBrowser::ServiceEventArgs& args)
 {
-    this->mOscSendAddress = (std::string) args.service.host();
+//    this->mOscSendAddress = (std::string) args.service.host();
     this->mOscSendPort = args.service.port();
+}
+
+void LightControlApp::onError(const void *sender, const Poco::DNSSD::DNSSDResponder::ErrorEventArgs &args) {
+    app::console()
+            << "Service registration failed: "
+            << args.error.message()
+            << " (" << args.error.code() << ")"
+            << std::endl;
 }
 
 void LightControlApp::keyDown(KeyEvent event)
@@ -251,6 +285,40 @@ void LightControlApp::update()
     }
 
     mDmxOut.update();
+}
+
+void LightControlApp::sendVolume() {
+    if (mOscSender) {
+        osc::Message message;
+        message.setAddress("/volume");
+        message.append(mVolume);
+        mOscSender->send(message);
+    }
+}
+
+void LightControlApp::sendCurrentValues() {
+    if (mOscSender) {
+        // 1/faders/column/row
+        for (int page = 1; page < 3; page++) {
+            osc::Bundle bundle;
+            for (int column = 1; column < 7; column++) {
+                for (int row = 1; row < 8; row++) {
+                    string address =
+                            "/" + std::to_string(page) + "/" + std::to_string(column) + "/" + std::to_string(row);
+                    int channel = getDmxChannel(page, column, row);
+                    osc::Message message;
+                    message.setAddress(address);
+                    message.append(mDmxOut.getChannelValue(channel));
+                    bundle.append(message);
+                }
+            }
+            mOscSender->send(bundle);
+        }
+    }
+}
+
+int LightControlApp::getDmxChannel(int page, int column, int row) {
+    return (page - 1) * 42 + 6 * (row - 1) + column;
 }
 
 void LightControlApp::drawGui()
@@ -355,9 +423,9 @@ LightControlApp::~LightControlApp()
 {
     mDmxOut.disConnect();
     mDnssdResponder->unregisterService(mServiceHandle);
+    mDnssdResponder->browser().cancel(mBrowserHandle);
     mDnssdResponder->stop();
     delete mDnssdResponder;
-    mBrowserHandle.reset();
     Poco::DNSSD::uninitializeDNSSD();
 }
 

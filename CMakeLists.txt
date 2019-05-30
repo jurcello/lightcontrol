@@ -9,6 +9,7 @@ set(CINDER_COPY_ASSETS ON)
 project( LightControl )
 
 get_filename_component( CINDER_PATH "../../cinder_0.9.1_mac" ABSOLUTE )
+SET(ARG_ASSETS_PATH ${APP_PATH}/assets)
 get_filename_component( APP_PATH "." ABSOLUTE )
 
 
