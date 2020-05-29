@@ -429,7 +429,7 @@ LightControlApp::~LightControlApp()
     Poco::DNSSD::uninitializeDNSSD();
 }
 
-CINDER_APP(LightControlApp, RendererGl(RendererGl::Options().msaa(8)), [](cinder::app::AppBase::Settings *settings) {
+CINDER_APP(LightControlApp, RendererGl(RendererGl::Options().msaa(1)), [](cinder::app::AppBase::Settings *settings) {
     settings->setTitle("Light Control");
     settings->setWindowSize(WINDOW_WIDTH, WINDOW_HEIGHT);
 });
